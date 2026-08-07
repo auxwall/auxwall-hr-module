@@ -4,6 +4,12 @@ import { documentType } from "./models/documentType";
 import { document } from "./models/document";
 import { documentRenewal } from "./models/documentRenewal";
 import { offerLetter } from "./models/offerLetter";
+import { department } from "./models/department";
+import { staffSchedule } from "./models/staffSchedule";
+import { staffShift } from "./models/staffShift";
+import { attendenceSummary } from "./models/attendenceSummary";
+import defineCronLog from "./models/cronLog";
+import { initAttendanceCron } from "./utils/attendenceSync";
 
 // Global models storage (fallback/legacy)
 const internalModels: Partial<Models> = {};
@@ -36,6 +42,18 @@ export const initializeDatabase = async ( sequelize: Sequelize, companyModel?: M
   models.document = document(sequelize);
   models.documentRenewal = documentRenewal(sequelize);
   models.offerLetter = offerLetter(sequelize);
+  models.department = department(sequelize);
+  models.staffSchedule = staffSchedule(sequelize);
+  models.staffShift = staffShift(sequelize);
+  models.attendenceSummary = attendenceSummary(sequelize);
+  models.cronLog = defineCronLog(sequelize);
+
+  if (staffModel) {
+    (models as any).staff = staffModel;
+  }
+  if (companyModel) {
+    (models as any).company = companyModel;
+  }
 
   // Define Associations
   const m = models as Required<Models>;
@@ -47,21 +65,49 @@ export const initializeDatabase = async ( sequelize: Sequelize, companyModel?: M
   m.documentRenewal.belongsTo(m.document, { foreignKey: 'documentId', as: 'document', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
   m.document.hasMany(m.documentRenewal, { foreignKey: 'documentId', as: 'renewals' });
 
+  // StaffSchedule associations
+  m.staffSchedule.belongsTo(m.department, { foreignKey: 'departmentId', as: 'department', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+  m.department.hasMany(m.staffSchedule, { foreignKey: 'departmentId', as: 'staffSchedules' });
+
+  // StaffShift associations
+  m.staffShift.belongsTo(m.department, { foreignKey: 'departmentId', as: 'department', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+  m.department.hasMany(m.staffShift, { foreignKey: 'departmentId', as: 'shifts' });
+  m.staffShift.hasMany(m.staffSchedule, { foreignKey: 'shiftId', as: 'staffSchedules', onDelete: 'SET NULL', onUpdate: 'CASCADE' });
+  m.staffSchedule.belongsTo(m.staffShift, { foreignKey: 'shiftId', as: 'shift' });
+
   if (companyModel) {
     m.documentType.belongsTo(companyModel, { foreignKey: 'companyId', as: 'company' });
     m.document.belongsTo(companyModel, { foreignKey: 'companyId', as: 'company' });
     m.offerLetter.belongsTo(companyModel, { foreignKey: 'companyId', as: 'company' });
+    m.department.belongsTo(companyModel, { foreignKey: 'companyId', as: 'company' });
+    m.staffSchedule.belongsTo(companyModel, { foreignKey: 'companyId', as: 'company' });
+    m.staffShift.belongsTo(companyModel, { foreignKey: 'companyId', as: 'company' });
   }
 
   if (staffModel) {
     m.document.belongsTo(staffModel, { foreignKey: 'staffId', as: 'staff' });
+    m.department.hasMany(staffModel, { foreignKey: 'departmentId', as: 'staffs' });
+    staffModel.belongsTo(m.department, { foreignKey: 'departmentId', as: 'department' });
+    m.staffSchedule.hasMany(staffModel, { foreignKey: 'scheduleId', as: 'staffs' });
+    staffModel.belongsTo(m.staffSchedule, { foreignKey: 'scheduleId', as: 'staffSchedule' });
+    m.staffShift.belongsTo(staffModel, { foreignKey: 'uploadedBy', as: 'uploader' });
+    m.staffShift.hasMany(staffModel, { foreignKey: 'shiftId', as: 'staffs' });
+    staffModel.belongsTo(m.staffShift, { foreignKey: 'shiftId', as: 'shift' });
+    m.attendenceSummary.belongsTo(staffModel, { foreignKey: 'staffId', as: 'staff' });
   }
 
   console.log("HR Management Database Models Initialized.");
-  return models;
+  return m;
 };
 
+export { initAttendanceCron };
+
 // Export controllers
-export * from "./controllers/documentType";
-export * from "./controllers/document";
-export * from "./controllers/offerLetter";
+export * from "./controllers/documentType/index";
+export * from "./controllers/document/index";
+export * from "./controllers/offerLetter/index";
+export * from "./controllers/department/index";
+export * from "./controllers/staffSchedule/index";
+export * from "./controllers/staffShift/index";
+export * from "./controllers/attendenceSummary/index";
+export { updateAttendanceSummary } from "./utils/attendenceLogic";

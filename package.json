@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "http-status": "^2.1.0",
-    "moment": "^2.30.1"
+    "moment": "^2.30.1",
+    "node-cron": "^3.0.3"
   },
   "peerDependencies": {
     "sequelize": "^6.31.1",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^14.0.0",
+    "@types/node-cron": "^3.0.11",
     "express": "^4.21.1",
     "pg": "^8.8.0",
     "sequelize": "^6.31.1",
