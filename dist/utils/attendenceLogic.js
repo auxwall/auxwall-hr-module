@@ -42,9 +42,17 @@ const updateAttendanceSummary = async (punchingRecord, hrModels) => {
     if (Staff.rawAttributes && Staff.rawAttributes["isFlexible"]) {
         attrs.push("isFlexible");
     }
+    if (Staff.rawAttributes && Staff.rawAttributes["status"]) {
+        attrs.push("status");
+    }
     const staff = await Staff.findOne({ where: { id: staffId }, attributes: attrs, raw: true });
     if (!staff)
         return console.log("⛔ Staff member not found:", staffId);
+    // Only allow active users
+    if (staff.status === false) {
+        console.log("⛔ Staff member is inactive, skipping attendance summary generation:", staffId);
+        return;
+    }
     const isFlexible = staff.isFlexible;
     /* =========================
        SHIFT DEFAULTS
@@ -131,8 +139,8 @@ const updateAttendanceSummary = async (punchingRecord, hrModels) => {
     /* =========================
        4️⃣ PUNCHES
     ========================= */
-    const startOfRange = shiftStartDT.clone().subtract(12, "hours").toDate();
-    const endOfRange = overtimeEndDT.toDate();
+    const startOfRange = shiftStartDT.clone().subtract(3, "hours").toDate();
+    const endOfRange = shiftEndDT.clone().add(Math.max(overtimeLimitMinutes, 360), "minutes").toDate();
     const rawPunches = await Punching.findAll({
         where: { staffId, eventDate: { [sequelize_1.Op.between]: [startOfRange, endOfRange] } },
         order: [["eventDate", "ASC"]],
@@ -158,7 +166,7 @@ const updateAttendanceSummary = async (punchingRecord, hrModels) => {
     const isLastPunchIn = punches.length % 2 !== 0;
     let lastOut = punches[punches.length - 1];
     let lastOutDT = (0, moment_1.default)(lastOut.eventDate);
-    const checkLimit = (0, moment_1.default)(shiftStartDT).subtract(2, 'hours');
+    const checkLimit = (0, moment_1.default)(shiftStartDT).subtract(3, 'hours');
     const firstIn = punches.find(p => (0, moment_1.default)(p.eventDate).isSameOrAfter(checkLimit)) || punches[0];
     /* =========================
        5️⃣ LIVE / UNAUTHORIZED

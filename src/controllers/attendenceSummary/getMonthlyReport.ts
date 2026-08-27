@@ -2,7 +2,7 @@ import { Model, ModelStatic, Op } from "sequelize";
 import { models } from "../../index";
 import moment from "moment";
 
-const getMonthlyReport = async (companyId: number, options: { year?: number, month?: number, from?: string, to?: string, name?: string, staffId?: number } = {}) => {
+const getMonthlyReport = async (companyId: number, options: { year?: number, month?: number, from?: string, to?: string, name?: string, staffId?: number, status?: string | boolean } = {}) => {
   const Staff = models.staff as ModelStatic<Model>;
   const AttendenceSummary = models.attendenceSummary as ModelStatic<Model>;
 
@@ -65,6 +65,9 @@ const getMonthlyReport = async (companyId: number, options: { year?: number, mon
   const staffWhere: any = { id: { [Op.in]: userIds } };
   if (options.name) {
     staffWhere.fullName = { [Op.iLike]: `%${options.name}%` };
+  }
+  if (options.status !== undefined) {
+    staffWhere.status = options.status === "true" || options.status === true;
   }
   const staffList = await Staff.findAll({ where: staffWhere, attributes: ["id", "fullName"], raw: true }) as any[];
 

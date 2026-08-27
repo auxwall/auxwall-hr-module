@@ -62,6 +62,9 @@ const getMonthlyReport = async (companyId, options = {}) => {
     if (options.name) {
         staffWhere.fullName = { [sequelize_1.Op.iLike]: `%${options.name}%` };
     }
+    if (options.status !== undefined) {
+        staffWhere.status = options.status === "true" || options.status === true;
+    }
     const staffList = await Staff.findAll({ where: staffWhere, attributes: ["id", "fullName"], raw: true });
     // 3. Map aggregates to a fast lookup structure
     const summaryMap = new Map();

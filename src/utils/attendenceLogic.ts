@@ -41,10 +41,19 @@ export const updateAttendanceSummary = async ( punchingRecord: any, hrModels: Pa
     if (Staff.rawAttributes && Staff.rawAttributes["isFlexible"]) {
         attrs.push("isFlexible");
     }
+    if (Staff.rawAttributes && Staff.rawAttributes["status"]) {
+        attrs.push("status");
+    }
 
     const staff: any = await Staff.findOne({ where: { id: staffId }, attributes: attrs, raw: true });
 
     if (!staff) return console.log("⛔ Staff member not found:", staffId);
+
+    // Only allow active users
+    if (staff.status === false) {
+        console.log("⛔ Staff member is inactive, skipping attendance summary generation:", staffId);
+        return;
+    }
 
     const isFlexible = staff.isFlexible;
 
@@ -146,8 +155,8 @@ export const updateAttendanceSummary = async ( punchingRecord: any, hrModels: Pa
     /* =========================
        4️⃣ PUNCHES
     ========================= */
-    const startOfRange = shiftStartDT.clone().subtract(12, "hours").toDate();
-    const endOfRange = overtimeEndDT.toDate();
+    const startOfRange = shiftStartDT.clone().subtract(3, "hours").toDate();
+    const endOfRange = shiftEndDT.clone().add(Math.max(overtimeLimitMinutes, 360), "minutes").toDate();
 
     const rawPunches: any[] = await Punching.findAll({
         where: { staffId, eventDate: { [Op.between]: [startOfRange, endOfRange] } },
@@ -180,7 +189,7 @@ export const updateAttendanceSummary = async ( punchingRecord: any, hrModels: Pa
     let lastOut = punches[punches.length - 1];
     let lastOutDT = moment(lastOut.eventDate);
 
-    const checkLimit = moment(shiftStartDT).subtract(2, 'hours');
+    const checkLimit = moment(shiftStartDT).subtract(3, 'hours');
     const firstIn = punches.find(p => moment(p.eventDate).isSameOrAfter(checkLimit)) || punches[0];
 
     /* =========================
