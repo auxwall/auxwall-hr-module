@@ -1,9 +1,16 @@
 import { runSyncTask } from "./runSync";
 import { recoverMissedDays } from "./recoverMissedDays";
-import cron from "node-cron";
+// dynamic cron import
 import moment from "moment";
 
 export const initAttendanceCron = async (hrModels: any) => {
+    let cron: any;
+    try {
+        cron = require("node-cron");
+    } catch (e) {
+        console.warn("⚠️ node-cron is not installed. Attendance cron job will not start.");
+        return;
+    }
 
     if (!hrModels.cronLog) return console.warn("⚠️ CronLog model not initialized. Attendance cron job will not start.");
 

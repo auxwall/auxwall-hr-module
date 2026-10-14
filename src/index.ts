@@ -110,4 +110,5 @@ export * from "./controllers/department/index";
 export * from "./controllers/staffSchedule/index";
 export * from "./controllers/staffShift/index";
 export * from "./controllers/attendenceSummary/index";
+export * from "./controllers/dashboard/index";
 export { updateAttendanceSummary } from "./utils/attendenceLogic";

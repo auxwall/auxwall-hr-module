@@ -113,5 +113,6 @@ __exportStar(require("./controllers/department/index"), exports);
 __exportStar(require("./controllers/staffSchedule/index"), exports);
 __exportStar(require("./controllers/staffShift/index"), exports);
 __exportStar(require("./controllers/attendenceSummary/index"), exports);
+__exportStar(require("./controllers/dashboard/index"), exports);
 var attendenceLogic_1 = require("./utils/attendenceLogic");
 Object.defineProperty(exports, "updateAttendanceSummary", { enumerable: true, get: function () { return attendenceLogic_1.updateAttendanceSummary; } });
