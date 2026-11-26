@@ -44,16 +44,7 @@ const getHrDashboardStats = async (companyId, options = {}) => {
             const docJson = doc.toJSON ? doc.toJSON() : doc;
             const renewals = docJson.renewals || [];
             const latestRenewal = renewals.length > 0 ? renewals[0] : null;
-            return {
-                id: docJson.id,
-                documentTypeId: docJson.documentTypeId,
-                staffId: docJson.staffId,
-                documentNumber: (latestRenewal === null || latestRenewal === void 0 ? void 0 : latestRenewal.documentNumber) || docJson.documentNumber || 'N/A',
-                issueDate: (latestRenewal === null || latestRenewal === void 0 ? void 0 : latestRenewal.issueDate) || docJson.issueDate,
-                expiryDate: (latestRenewal === null || latestRenewal === void 0 ? void 0 : latestRenewal.expiryDate) || docJson.expiryDate,
-                staffName: docJson.staff ? (docJson.staff.fullName || docJson.staff.userName || 'Staff') : 'Company Document',
-                documentType: ((_a = docJson.documentType) === null || _a === void 0 ? void 0 : _a.name) || 'General Document'
-            };
+            return { id: docJson.id, documentTypeId: docJson.documentTypeId, staffId: docJson.staffId, documentNumber: (latestRenewal === null || latestRenewal === void 0 ? void 0 : latestRenewal.documentNumber) || docJson.documentNumber || 'N/A', issueDate: (latestRenewal === null || latestRenewal === void 0 ? void 0 : latestRenewal.issueDate) || docJson.issueDate, expiryDate: (latestRenewal === null || latestRenewal === void 0 ? void 0 : latestRenewal.expiryDate) || docJson.expiryDate, staffName: docJson.staff ? (docJson.staff.fullName || docJson.staff.userName || 'Staff') : 'Company Document', documentType: ((_a = docJson.documentType) === null || _a === void 0 ? void 0 : _a.name) || 'General Document' };
         });
         const seenGroups = new Set();
         documents.forEach((doc) => {
@@ -68,27 +59,11 @@ const getHrDashboardStats = async (companyId, options = {}) => {
                 const diffDays = exp.diff(today, 'days');
                 if (diffDays < 0) {
                     expiredCount++;
-                    urgentDocuments.push({
-                        id: doc.id,
-                        staffName: doc.staffName,
-                        documentType: doc.documentType,
-                        documentNumber: doc.documentNumber,
-                        expiryDate: (0, moment_1.default)(doc.expiryDate).format('YYYY-MM-DD'),
-                        daysRemaining: diffDays,
-                        status: 'Expired'
-                    });
+                    urgentDocuments.push({ id: doc.id, staffName: doc.staffName, documentType: doc.documentType, documentNumber: doc.documentNumber, expiryDate: (0, moment_1.default)(doc.expiryDate).format('YYYY-MM-DD'), daysRemaining: diffDays, status: 'Expired' });
                 }
                 else if (diffDays <= 30) {
                     expiringSoonCount++;
-                    urgentDocuments.push({
-                        id: doc.id,
-                        staffName: doc.staffName,
-                        documentType: doc.documentType,
-                        documentNumber: doc.documentNumber,
-                        expiryDate: (0, moment_1.default)(doc.expiryDate).format('YYYY-MM-DD'),
-                        daysRemaining: diffDays,
-                        status: 'Expiring Soon'
-                    });
+                    urgentDocuments.push({ id: doc.id, staffName: doc.staffName, documentType: doc.documentType, documentNumber: doc.documentNumber, expiryDate: (0, moment_1.default)(doc.expiryDate).format('YYYY-MM-DD'), daysRemaining: diffDays, status: 'Expiring Soon' });
                 }
                 else {
                     validCount++;
@@ -141,24 +116,15 @@ const getHrDashboardStats = async (companyId, options = {}) => {
     const departmentDistribution = [];
     try {
         if (Department) {
-            const departments = await Department.findAll({
-                where: { companyId },
-                order: [['name', 'ASC']]
-            });
+            const departments = await Department.findAll({ where: { companyId }, order: [['name', 'ASC']] });
             for (const dept of departments) {
                 const dJson = dept.toJSON ? dept.toJSON() : dept;
                 let count = 0;
                 if (Staff) {
                     const staffInclude = Company ? [{ model: Company, where: { id: companyId }, required: true }] : [];
-                    count = await Staff.count({
-                        include: staffInclude,
-                        where: { departmentId: dJson.id }
-                    }).catch(() => 0);
+                    count = await Staff.count({ include: staffInclude, where: { departmentId: dJson.id } }).catch(() => 0);
                 }
-                departmentDistribution.push({
-                    name: dJson.name || 'Department',
-                    value: count
-                });
+                departmentDistribution.push({ name: dJson.name || 'Department', value: count });
             }
         }
     }
@@ -199,30 +165,11 @@ const getHrDashboardStats = async (companyId, options = {}) => {
     const presentCount = todayAttendance.length;
     const absentCount = Math.max(0, activeStaff - presentCount);
     return {
-        staffStats: {
-            totalStaff,
-            activeStaff,
-            inactiveStaff: totalStaff - activeStaff
-        },
-        attendanceStats: {
-            presentCount,
-            absentCount,
-            attendanceRate: activeStaff > 0 ? Math.round((presentCount / activeStaff) * 100) : 0
-        },
+        staffStats: { totalStaff, activeStaff, inactiveStaff: totalStaff - activeStaff },
+        attendanceStats: { presentCount, absentCount, attendanceRate: activeStaff > 0 ? Math.round((presentCount / activeStaff) * 100) : 0 },
         todayAttendance: todayAttendance.slice(0, 15),
-        documentStats: {
-            totalDocuments,
-            expiredCount,
-            expiringSoonCount,
-            validCount,
-            urgentCount: expiredCount + expiringSoonCount
-        },
-        offerLetterStats: {
-            totalOffers,
-            draftCount,
-            sentCount,
-            acceptedCount
-        },
+        documentStats: { totalDocuments, expiredCount, expiringSoonCount, validCount, urgentCount: expiredCount + expiringSoonCount },
+        offerLetterStats: { totalOffers, draftCount, sentCount, acceptedCount },
         urgentDocuments: urgentDocuments.slice(0, 8),
         recentOfferLetters,
         departmentDistribution

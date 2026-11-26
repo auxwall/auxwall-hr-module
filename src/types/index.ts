@@ -12,4 +12,15 @@ export type Models = {
   staff?: ModelStatic<Model>;
   company?: ModelStatic<Model>;
   cronLog: ModelStatic<Model>;
+  employeeProfile: ModelStatic<Model>;
+  employeeHistory: ModelStatic<Model>;
+  employeeTask: ModelStatic<Model>;
+  publicHoliday: ModelStatic<Model>;
+  leaveType: ModelStatic<Model>;
+  leaveRequest: ModelStatic<Model>;
+  trainingRecord: ModelStatic<Model>;
+  performanceReview: ModelStatic<Model>;
+  finalSettlement: ModelStatic<Model>;
+  companyAsset: ModelStatic<Model>;
+  assetCategory: ModelStatic<Model>;
 };

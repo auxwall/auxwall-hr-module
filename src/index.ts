@@ -10,6 +10,17 @@ import { staffShift } from "./models/staffShift";
 import { attendenceSummary } from "./models/attendenceSummary";
 import defineCronLog from "./models/cronLog";
 import { initAttendanceCron } from "./utils/attendenceSync";
+import { employeeProfile as defineEmployeeProfile } from "./models/employeeProfile";
+import { employeeHistory as defineEmployeeHistory } from "./models/employeeHistory";
+import { employeeTask as defineEmployeeTask } from "./models/employeeTask";
+import { publicHoliday as definePublicHoliday } from "./models/publicHoliday";
+import { leaveType as defineLeaveType } from "./models/leaveType";
+import { leaveRequest as defineLeaveRequest } from "./models/leaveRequest";
+import { trainingRecord as defineTrainingRecord } from "./models/trainingRecord";
+import { performanceReview as definePerformanceReview } from "./models/performanceReview";
+import { finalSettlement as defineFinalSettlement } from "./models/finalSettlement";
+import { companyAsset as defineCompanyAsset } from "./models/companyAsset";
+import { assetCategory as defineAssetCategory } from "./models/assetCategory";
 
 // Global models storage (fallback/legacy)
 const internalModels: Partial<Models> = {};
@@ -47,6 +58,17 @@ export const initializeDatabase = async ( sequelize: Sequelize, companyModel?: M
   models.staffShift = staffShift(sequelize);
   models.attendenceSummary = attendenceSummary(sequelize);
   models.cronLog = defineCronLog(sequelize);
+  models.employeeProfile = defineEmployeeProfile(sequelize);
+  models.employeeHistory = defineEmployeeHistory(sequelize);
+  models.employeeTask = defineEmployeeTask(sequelize);
+  models.publicHoliday = definePublicHoliday(sequelize);
+  models.leaveType = defineLeaveType(sequelize);
+  models.leaveRequest = defineLeaveRequest(sequelize);
+  models.trainingRecord = defineTrainingRecord(sequelize);
+  models.performanceReview = definePerformanceReview(sequelize);
+  models.finalSettlement = defineFinalSettlement(sequelize);
+  models.companyAsset = defineCompanyAsset(sequelize);
+  models.assetCategory = defineAssetCategory(sequelize);
 
   if (staffModel) {
     (models as any).staff = staffModel;
@@ -94,8 +116,32 @@ export const initializeDatabase = async ( sequelize: Sequelize, companyModel?: M
     m.staffShift.hasMany(staffModel, { foreignKey: 'shiftId', as: 'staffs' });
     staffModel.belongsTo(m.staffShift, { foreignKey: 'shiftId', as: 'shift' });
     m.attendenceSummary.belongsTo(staffModel, { foreignKey: 'staffId', as: 'staff' });
+    m.employeeProfile.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+    m.employeeTask.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+    m.trainingRecord.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+    m.performanceReview.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+    m.finalSettlement.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+    m.companyAsset.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+    m.employeeProfile.belongsTo(staffModel, { foreignKey: 'managerId', as: 'manager' });
   }
 
+  m.leaveRequest.belongsTo(m.leaveType, { foreignKey: 'leaveTypeId', as: 'leaveType' });
+  m.leaveType.hasMany(m.leaveRequest, { foreignKey: 'leaveTypeId', as: 'requests' });
+  await Promise.all(
+    [
+      m.employeeProfile,
+      m.employeeHistory,
+      m.employeeTask,
+      m.publicHoliday,
+      m.leaveType,
+      m.leaveRequest,
+      m.trainingRecord,
+      m.performanceReview,
+      m.finalSettlement,
+      m.companyAsset,
+      m.assetCategory,
+    ].map(model => model.sync()),
+  );
   console.log("HR Management Database Models Initialized.");
   return m;
 };
@@ -112,3 +158,9 @@ export * from "./controllers/staffShift/index";
 export * from "./controllers/attendenceSummary/index";
 export * from "./controllers/dashboard/index";
 export { updateAttendanceSummary } from "./utils/attendenceLogic";
+export * from "./controllers/lifecycle/index";
+export * from "./controllers/publicHoliday/index";
+export * from "./controllers/leave/index";
+export * from "./controllers/development/index";
+export * from "./controllers/settlement/index";
+export * from "./controllers/assets/index";

@@ -29,6 +29,17 @@ const attendenceSummary_1 = require("./models/attendenceSummary");
 const cronLog_1 = __importDefault(require("./models/cronLog"));
 const attendenceSync_1 = require("./utils/attendenceSync");
 Object.defineProperty(exports, "initAttendanceCron", { enumerable: true, get: function () { return attendenceSync_1.initAttendanceCron; } });
+const employeeProfile_1 = require("./models/employeeProfile");
+const employeeHistory_1 = require("./models/employeeHistory");
+const employeeTask_1 = require("./models/employeeTask");
+const publicHoliday_1 = require("./models/publicHoliday");
+const leaveType_1 = require("./models/leaveType");
+const leaveRequest_1 = require("./models/leaveRequest");
+const trainingRecord_1 = require("./models/trainingRecord");
+const performanceReview_1 = require("./models/performanceReview");
+const finalSettlement_1 = require("./models/finalSettlement");
+const companyAsset_1 = require("./models/companyAsset");
+const assetCategory_1 = require("./models/assetCategory");
 // Global models storage (fallback/legacy)
 const internalModels = {};
 // Context-aware models getter (allows multi-tenancy)
@@ -61,6 +72,17 @@ const initializeDatabase = async (sequelize, companyModel, staffModel) => {
     exports.models.staffShift = (0, staffShift_1.staffShift)(sequelize);
     exports.models.attendenceSummary = (0, attendenceSummary_1.attendenceSummary)(sequelize);
     exports.models.cronLog = (0, cronLog_1.default)(sequelize);
+    exports.models.employeeProfile = (0, employeeProfile_1.employeeProfile)(sequelize);
+    exports.models.employeeHistory = (0, employeeHistory_1.employeeHistory)(sequelize);
+    exports.models.employeeTask = (0, employeeTask_1.employeeTask)(sequelize);
+    exports.models.publicHoliday = (0, publicHoliday_1.publicHoliday)(sequelize);
+    exports.models.leaveType = (0, leaveType_1.leaveType)(sequelize);
+    exports.models.leaveRequest = (0, leaveRequest_1.leaveRequest)(sequelize);
+    exports.models.trainingRecord = (0, trainingRecord_1.trainingRecord)(sequelize);
+    exports.models.performanceReview = (0, performanceReview_1.performanceReview)(sequelize);
+    exports.models.finalSettlement = (0, finalSettlement_1.finalSettlement)(sequelize);
+    exports.models.companyAsset = (0, companyAsset_1.companyAsset)(sequelize);
+    exports.models.assetCategory = (0, assetCategory_1.assetCategory)(sequelize);
     if (staffModel) {
         exports.models.staff = staffModel;
     }
@@ -100,7 +122,29 @@ const initializeDatabase = async (sequelize, companyModel, staffModel) => {
         m.staffShift.hasMany(staffModel, { foreignKey: 'shiftId', as: 'staffs' });
         staffModel.belongsTo(m.staffShift, { foreignKey: 'shiftId', as: 'shift' });
         m.attendenceSummary.belongsTo(staffModel, { foreignKey: 'staffId', as: 'staff' });
+        m.employeeProfile.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+        m.employeeTask.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+        m.trainingRecord.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+        m.performanceReview.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+        m.finalSettlement.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+        m.companyAsset.belongsTo(staffModel, { foreignKey: 'staffId', as: 'employee' });
+        m.employeeProfile.belongsTo(staffModel, { foreignKey: 'managerId', as: 'manager' });
     }
+    m.leaveRequest.belongsTo(m.leaveType, { foreignKey: 'leaveTypeId', as: 'leaveType' });
+    m.leaveType.hasMany(m.leaveRequest, { foreignKey: 'leaveTypeId', as: 'requests' });
+    await Promise.all([
+        m.employeeProfile,
+        m.employeeHistory,
+        m.employeeTask,
+        m.publicHoliday,
+        m.leaveType,
+        m.leaveRequest,
+        m.trainingRecord,
+        m.performanceReview,
+        m.finalSettlement,
+        m.companyAsset,
+        m.assetCategory,
+    ].map(model => model.sync()));
     console.log("HR Management Database Models Initialized.");
     return m;
 };
@@ -116,3 +160,9 @@ __exportStar(require("./controllers/attendenceSummary/index"), exports);
 __exportStar(require("./controllers/dashboard/index"), exports);
 var attendenceLogic_1 = require("./utils/attendenceLogic");
 Object.defineProperty(exports, "updateAttendanceSummary", { enumerable: true, get: function () { return attendenceLogic_1.updateAttendanceSummary; } });
+__exportStar(require("./controllers/lifecycle/index"), exports);
+__exportStar(require("./controllers/publicHoliday/index"), exports);
+__exportStar(require("./controllers/leave/index"), exports);
+__exportStar(require("./controllers/development/index"), exports);
+__exportStar(require("./controllers/settlement/index"), exports);
+__exportStar(require("./controllers/assets/index"), exports);
